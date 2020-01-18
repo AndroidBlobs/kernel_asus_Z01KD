@@ -110,6 +110,12 @@ mpath=`dirname $$mdpath`;\
 ko=`find $$mpath/kernel -type f -name *.ko`;\
 for i in $$ko; do mv $$i $(KERNEL_MODULES_OUT)/; done;\
 fi
+if [ ZC600KL = $(ASUS_BUILD_PROJECT) ] || [ ZE554KL = $(ASUS_BUILD_PROJECT) ]; then \
+	echo "ASUS_BUILD_PROJECT = $(ASUS_BUILD_PROJECT)"; \
+    mkdir -p $(TARGET_OUT)/vendor/lib/modules/  ; \
+    cp $(TARGET_OUT)/lib/modules/texfat.ko $(TARGET_OUT)/vendor/lib/modules/ || true  ; \
+    echo "copy texfat.ko to vendor"; \
+fi
 endef
 
 define clean-module-folder
