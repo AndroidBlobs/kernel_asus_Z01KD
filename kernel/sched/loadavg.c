@@ -9,7 +9,9 @@
 #include <linux/export.h>
 
 #include "sched.h"
-
+#define LOAD_INT(x) ((x) >> FSHIFT)
+#define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1-1)) * 100)
+extern struct work_struct __dumpthread_work;
 /*
  * Global load-average calculations
  *
@@ -62,6 +64,9 @@ atomic_long_t calc_load_tasks;
 unsigned long calc_load_update;
 unsigned long avenrun[3];
 EXPORT_SYMBOL(avenrun); /* should be removed */
+
+//ASUS_BSP: skip sync before suspend if too busy
+int suspend_skip_sync_flag = 0;
 
 /**
  * get_avenrun - get the load average array
@@ -325,7 +330,18 @@ static void calc_global_nohz(void)
 
 		calc_load_update += n * LOAD_FREQ;
 	}
+	printk("loadavg %lu.%02lu  %ld/%d \n", LOAD_INT(avenrun[0]), LOAD_FRAC(avenrun[0]), nr_running(), nr_threads);
 
+	//ASUS_BSP: skip sync before suspend if too busy
+	if(LOAD_INT(avenrun[0]) > 6 ){
+	    suspend_skip_sync_flag = 1;
+	    pr_debug("loadavg >= 7 ; may skip sync before suspend \n");
+	}else{
+	    suspend_skip_sync_flag = 0;
+	}
+
+	if(LOAD_INT(avenrun[0]) > 14 )
+	    schedule_work(&__dumpthread_work);
 	/*
 	 * Flip the idle index...
 	 *
