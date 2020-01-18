@@ -74,3 +74,6 @@ obj-$(CONFIG_AXP288_FUEL_GAUGE) += axp288_fuel_gauge.o
 obj-$(CONFIG_AXP288_CHARGER)	+= axp288_charger.o
 obj-$(CONFIG_ARCH_QCOM)		+= qcom/
 obj-$(CONFIG_POWER_SUPPLY)	+= supply/
+ifeq ($(ASUS_BUILD_PROJECT),ZE554KL)
+obj-y  += us5587.o
+endif
