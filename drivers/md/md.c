@@ -5042,7 +5042,11 @@ static int md_alloc(dev_t dev, char *name)
 	disk->fops = &md_fops;
 	disk->private_data = mddev;
 	disk->queue = mddev->queue;
+#ifdef BLOCK_WRITE_CACHE
+	blk_queue_write_cache(mddev->queue, true, true);
+#else
 	blk_queue_flush(mddev->queue, REQ_FLUSH | REQ_FUA);
+#endif
 	/* Allow extended partitions.  This makes the
 	 * 'mdp' device redundant, but we can't really
 	 * remove it now.
@@ -6144,9 +6148,6 @@ static int hot_remove_disk(struct mddev *mddev, dev_t dev)
 	char b[BDEVNAME_SIZE];
 	struct md_rdev *rdev;
 	int ret = -1;
-
-	if (!mddev->pers)
-		return -ENODEV;
 
 	rdev = find_rdev(mddev, dev);
 	if (!rdev)

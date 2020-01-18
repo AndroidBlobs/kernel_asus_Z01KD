@@ -131,7 +131,6 @@ int cnss_suspend_pci_link(struct cnss_pci_data *pci_priv)
 	cnss_pr_dbg("Suspending PCI link\n");
 	if (!pci_priv->pci_link_state) {
 		cnss_pr_info("PCI link is already suspended!\n");
-		ret = -EINVAL;
 		goto out;
 	}
 
@@ -394,12 +393,12 @@ static int cnss_qca6174_shutdown(struct cnss_pci_data *pci_priv)
 	cnss_pci_set_auto_suspended(pci_priv, 0);
 
 	ret = cnss_suspend_pci_link(pci_priv);
-	if (ret) {
+	if (ret)
 		cnss_pr_err("Failed to suspend PCI link, err = %d\n", ret);
-		return -EINVAL;
-	}
 
 	cnss_power_off_device(plat_priv);
+
+	clear_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
 
 	return ret;
 }
@@ -517,6 +516,7 @@ static int cnss_qca6290_shutdown(struct cnss_pci_data *pci_priv)
 
 	clear_bit(CNSS_FW_READY, &plat_priv->driver_state);
 	clear_bit(CNSS_FW_MEM_READY, &plat_priv->driver_state);
+	clear_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
 
 	return ret;
 }
@@ -757,7 +757,6 @@ int cnss_pci_unregister_driver_hdlr(struct cnss_pci_data *pci_priv)
 	set_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
 	cnss_pci_dev_shutdown(pci_priv);
 	pci_priv->driver_ops = NULL;
-	clear_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
 
 	return 0;
 }

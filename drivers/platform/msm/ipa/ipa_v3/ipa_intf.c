@@ -222,7 +222,7 @@ int ipa3_query_intf(struct ipa_ioc_query_intf *lookup)
 	int result = -EINVAL;
 
 	if (lookup == NULL) {
-		IPAERR_RL("invalid param lookup is NULL\n");
+		IPAERR("invalid param lookup=%p\n", lookup);
 		return result;
 	}
 
