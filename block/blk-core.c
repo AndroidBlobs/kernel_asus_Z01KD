@@ -661,17 +661,21 @@ EXPORT_SYMBOL(blk_alloc_queue);
 int blk_queue_enter(struct request_queue *q, gfp_t gfp)
 {
 	while (true) {
+		int ret;
+
 		if (percpu_ref_tryget_live(&q->q_usage_counter))
 			return 0;
 
 		if (!gfpflags_allow_blocking(gfp))
 			return -EBUSY;
 
-		wait_event(q->mq_freeze_wq,
-			   !atomic_read(&q->mq_freeze_depth) ||
-			   blk_queue_dying(q));
+		ret = wait_event_interruptible(q->mq_freeze_wq,
+				!atomic_read(&q->mq_freeze_depth) ||
+				blk_queue_dying(q));
 		if (blk_queue_dying(q))
 			return -ENODEV;
+		if (ret)
+			return ret;
 	}
 }
 
@@ -1965,7 +1969,12 @@ generic_make_request_checks(struct bio *bio)
 	 * drivers without flush support don't have to worry
 	 * about them.
 	 */
+#ifdef BLOCK_WRITE_CACHE
+	if ((bio->bi_rw & (REQ_FLUSH | REQ_FUA)) &&
+	    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+#else
 	if ((bio->bi_rw & (REQ_FLUSH | REQ_FUA)) && !q->flush_flags) {
+#endif
 		bio->bi_rw &= ~(REQ_FLUSH | REQ_FUA);
 		if (!nr_sectors) {
 			err = 0;
