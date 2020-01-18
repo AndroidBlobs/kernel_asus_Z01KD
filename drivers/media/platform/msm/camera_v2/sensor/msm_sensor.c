@@ -19,11 +19,13 @@
 #include <linux/regulator/consumer.h>
 
 #undef CDBG
-#define CDBG(fmt, args...) pr_debug(fmt, ##args)
+#define CDBG(fmt, args...) pr_err(fmt, ##args)
 
 static struct msm_camera_i2c_fn_t msm_sensor_cci_func_tbl;
 static struct msm_camera_i2c_fn_t msm_sensor_secure_func_tbl;
-
+#ifdef ASUS_ZC600KL_PROJECT
+bool powerdown_done = 0;//ASUS BSP Ryan add to make sure power up processes after power done
+#endif
 static void msm_sensor_adjust_mclk(struct msm_camera_power_ctrl_t *ctrl)
 {
 	int idx;
@@ -116,7 +118,8 @@ int msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_camera_power_ctrl_t *power_info;
 	enum msm_camera_device_type_t sensor_device_type;
 	struct msm_camera_i2c_client *sensor_i2c_client;
-
+	int rc = 0;
+	
 	if (!s_ctrl) {
 		pr_err("%s:%d failed: s_ctrl %pK\n",
 			__func__, __LINE__, s_ctrl);
@@ -139,14 +142,20 @@ int msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	/* Power down secure session if it exist*/
 	if (s_ctrl->is_secure)
 		msm_camera_tz_i2c_power_down(sensor_i2c_client);
-
-	return msm_camera_power_down(power_info, sensor_device_type,
+	rc = msm_camera_power_down(power_info, sensor_device_type,
 		sensor_i2c_client);
+	#ifdef ASUS_ZC600KL_PROJECT
+	powerdown_done = 1;//ASUS BSP Ryan add to make sure power up processes after power done
+	#endif
+	return rc;
 }
 
 int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	int rc;
+	#ifdef ASUS_ZC600KL_PROJECT
+	int cnt = 0;
+	#endif
 	struct msm_camera_power_ctrl_t *power_info;
 	struct msm_camera_i2c_client *sensor_i2c_client;
 	struct msm_camera_slave_info *slave_info;
@@ -180,7 +189,19 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 
 	CDBG("Sensor %d tagged as %s\n", s_ctrl->id,
 		(s_ctrl->is_secure)?"SECURE":"NON-SECURE");
-
+	 //ASUS BSP Ryan+++ add to make sure power up processes after power done
+	#ifdef ASUS_ZC600KL_PROJECT
+	while(!powerdown_done && cnt < 30)
+		{
+		cnt++;
+		msleep(10);
+	}
+	if(cnt >= 5 )
+	pr_err(" power down not finished , sleep 10ms ,times = %d",cnt);
+	cnt = 0;
+	powerdown_done = 0;
+	#endif
+	//ASUS BSP Ryan--- add to make sure power up processes after power done
 	for (retry = 0; retry < 3; retry++) {
 		if (s_ctrl->is_secure) {
 			rc = msm_camera_tz_i2c_power_up(sensor_i2c_client);
@@ -268,6 +289,10 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return rc;
 	}
 
+if(chipid==0x363) {//for mp imx363 sensor
+	pr_err(" It's  MP imx363 sensor change sensorid to 333 ");
+	chipid=0x333;
+}
 	pr_debug("%s: read id: 0x%x expected id 0x%x:\n",
 			__func__, chipid, slave_info->sensor_id);
 	if (msm_sensor_id_by_mask(s_ctrl, chipid) != slave_info->sensor_id) {
