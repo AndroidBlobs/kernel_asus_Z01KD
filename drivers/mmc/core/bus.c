@@ -320,6 +320,9 @@ struct mmc_card *mmc_alloc_card(struct mmc_host *host, struct device_type *type)
 /*
  * Register a new MMC card with the driver model.
  */
+//ASUS_BSP: detect SDHC for sync before suspend issue
+int is_sdhc_flag = 0;
+
 int mmc_add_card(struct mmc_card *card)
 {
 	int ret;
@@ -345,8 +348,10 @@ int mmc_add_card(struct mmc_card *card)
 		if (mmc_card_blockaddr(card)) {
 			if (mmc_card_ext_capacity(card))
 				type = "SDXC";
-			else
+			else{
 				type = "SDHC";
+				is_sdhc_flag = 1;
+			}
 		}
 		break;
 	case MMC_TYPE_SDIO:
@@ -428,6 +433,9 @@ void mmc_remove_card(struct mmc_card *card)
 		device_del(&card->dev);
 		of_node_put(card->dev.of_node);
 	}
+
+	//ASUS_BSP: reset flag
+	is_sdhc_flag = 0;
 
 	kfree(card->wr_pack_stats.packing_events);
 
