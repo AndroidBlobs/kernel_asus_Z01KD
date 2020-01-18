@@ -1,0 +1,114 @@
+/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+/dts-v1/;
+
+#include "ara-er-sdm636.dtsi"
+#include "ara-er-sdm636-qrd.dtsi"
+#include "sdm660-internal-codec.dtsi"
+
+/ {
+	model = "Qualcomm Technologies, Inc. ARA-ER-OC SDM 636 PM660 + PM660L QRD";
+	compatible = "qcom,sdm636-qrd", "qcom,sdm636", "qcom,qrd";
+	qcom,board-id = <0x1000b 0>,<63 0>,<62 0>;
+	qcom,pmic-id = <0x0001001b 0x0101011a 0x0 0x0>,
+			<0x0001001b 0x0201011a 0x0 0x0>,
+			<0x0001001b 0x0102001a 0x0 0x0>;
+};
+
+&mdss_mdp {
+	qcom,mdss-pref-prim-intf = "dsi";
+};
+
+&mdss_dsi {
+	hw-config = "single_dsi";
+};
+
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_tm5p5_r63350_1080p_video>;
+	pinctrl-names = "mdss_default", "mdss_sleep";
+	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
+	pinctrl-1 = <&mdss_dsi_suspend &mdss_te_suspend>;
+	qcom,platform-reset-gpio = <&tlmm 53 0>;
+	qcom,platform-te-gpio = <&tlmm 59 0>;
+};
+
+&pm660l_wled {
+	qcom,led-strings-list = [00 01];
+};
+
+&soc {
+	hbtp {
+		compatible = "qcom,hbtp-input";
+		pinctrl-names = "pmx_ts_active", "pmx_ts_suspend";
+		pinctrl-0 = <&ts_rst_active>;
+		pinctrl-1 = <&ts_rst_suspend>;
+		vcc_ana-supply = <&pm660l_l3>;
+		vcc_dig-supply = <&pm660_l13>;
+		qcom,afe-load = <20000>;
+		qcom,afe-vtg-min = <3008000>;
+		qcom,afe-vtg-max = <3008000>;
+		qcom,dig-load = <40000>;
+		qcom,dig-vtg-min = <1808000>;
+		qcom,dig-vtg-max = <1808000>;
+		qcom,fb-resume-delay-us = <10000>;
+		qcom,afe-force-power-on;
+		qcom,afe-power-on-delay-us = <1000>;
+		qcom,afe-power-off-delay-us = <6>;
+	};
+
+	clock_cpu: qcom,clk-cpu-660@179c0000 {
+		qcom,pwrcl-speedbin3-v0 =
+			<   300000000 0x0004000f 0x01200020 0x1 1 >,
+			<   633600000 0x05040021 0x03200020 0x1 2 >,
+			<   902400000 0x0404002f 0x04260026 0x1 3 >,
+			<  1113600000 0x0404003a 0x052e002e 0x2 4 >,
+			<  1401600000 0x04040049 0x073a003a 0x2 5 >,
+			<  1536000000 0x04040050 0x08400040 0x2 6 >,
+			<  1593600000 0x04040054 0x09430043 0x2 7 >,
+			<  1612800000 0x04040060 0x094c004c 0x3 8 >;
+		qcom,perfcl-speedbin3-v0 =
+			<   300000000 0x0004000f 0x01200020 0x1 1 >,
+			<  1113600000 0x0404003a 0x052e002e 0x1 2 >,
+			<  1401600000 0x04040049 0x073a003a 0x2 3 >,
+			<  1747200000 0x0404005b 0x09480048 0x2 4 >,
+			<  1766400000 0x0404005e 0x094b004b 0x2 5 >,
+			<  1785600000 0x04040070 0x0b590059 0x2 6 >,
+			<  1804800000 0x04040080 0x0c660066 0x3 7 >;
+	};
+
+	msm_cpufreq: qcom,msm-cpufreq {
+		qcom,cpufreq-table-0 =
+			<  633600 >,
+			<  902400 >,
+			< 1113600 >,
+			< 1401600 >,
+			< 1536000 >,
+			< 1593600 >,
+			< 1612800 >,
+			< 1747200 >,
+			< 1843200 >;
+
+		qcom,cpufreq-table-4 =
+			< 1113600 >,
+			< 1401600 >,
+			< 1747200 >,
+			< 1766400 >,
+			< 1785600 >,
+			< 1804800 >,
+			< 1958400 >,
+			< 2150400 >,
+			< 2208000 >,
+			< 2457600 >;
+	};
+};
